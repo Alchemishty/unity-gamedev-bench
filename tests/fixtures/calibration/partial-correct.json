@@ -1,0 +1,9 @@
+{
+  "name": "partial-correct",
+  "description": "Implements add/remove but no capacity, no network sync, no tests — mid-range score",
+  "task_id": "s01",
+  "required_rubrics": ["correctness", "robustness", "readability", "architecture", "domain_correctness", "test_quality"],
+  "expected_overall": [25, 50],
+  "expected_correctness": [4, 6],
+  "scoring_input_suffix": "\n```diff\ndiff --git a/Assets/Scripts/Data/Inventory.cs b/Assets/Scripts/Data/Inventory.cs\nnew file mode 100644\n--- /dev/null\n+++ b/Assets/Scripts/Data/Inventory.cs\n@@ -0,0 +1,25 @@\n+using System.Collections.Generic;\n+\n+public class Inventory\n+{\n+    private List<string> items = new();\n+\n+    public void Add(string id)\n+    {\n+        if (id == null) return;\n+        items.Add(id);\n+    }\n+\n+    public void Remove(string id)\n+    {\n+        items.Remove(id);\n+    }\n+\n+    public bool Contains(string id)\n+    {\n+        return items.Contains(id);\n+    }\n+\n+    public int Count => items.Count;\n+    public List<string> GetAll() => items;\n+}\n```\n"
+}

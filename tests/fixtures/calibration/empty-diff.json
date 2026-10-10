@@ -1,0 +1,9 @@
+{
+  "name": "empty-diff",
+  "description": "Agent produced no changes — should score 0 on all rubrics",
+  "task_id": "s01",
+  "required_rubrics": ["correctness", "robustness", "readability", "architecture", "domain_correctness", "test_quality"],
+  "expected_overall": [0, 0],
+  "expected_correctness": [0, 0],
+  "scoring_input_suffix": "\n**STATUS: No changes** — score 0 on all applicable rubrics.\n"
+}

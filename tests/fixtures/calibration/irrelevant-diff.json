@@ -1,0 +1,9 @@
+{
+  "name": "irrelevant-diff",
+  "description": "Modifies files unrelated to the inventory task — should score near 0",
+  "task_id": "s01",
+  "required_rubrics": ["correctness", "robustness", "readability", "architecture", "domain_correctness", "test_quality"],
+  "expected_overall": [0, 15],
+  "expected_correctness": [0, 2],
+  "scoring_input_suffix": "\n```diff\ndiff --git a/Assets/Scripts/UI/HUDPanel.cs b/Assets/Scripts/UI/HUDPanel.cs\n--- a/Assets/Scripts/UI/HUDPanel.cs\n+++ b/Assets/Scripts/UI/HUDPanel.cs\n@@ -1,5 +1,6 @@\n using UnityEngine;\n+using UnityEngine.UI;\n \n public class HUDPanel : MonoBehaviour\n {\n+    [SerializeField] private Text healthText;\n }\n```\n"
+}

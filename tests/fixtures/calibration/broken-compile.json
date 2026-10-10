@@ -1,0 +1,9 @@
+{
+  "name": "broken-compile",
+  "description": "Diff with C# syntax error — should score very low on correctness",
+  "task_id": "s01",
+  "required_rubrics": ["correctness", "robustness", "readability", "architecture", "domain_correctness", "test_quality"],
+  "expected_overall": [0, 25],
+  "expected_correctness": [0, 2],
+  "scoring_input_suffix": "\n```diff\ndiff --git a/Assets/Scripts/Data/Inventory.cs b/Assets/Scripts/Data/Inventory.cs\nnew file mode 100644\n--- /dev/null\n+++ b/Assets/Scripts/Data/Inventory.cs\n@@ -0,0 +1,15 @@\n+using System;\n+using System.Collections.Generic;\n+\n+public class Inventory\n+{\n+    private List<string> items = new();\n+    public int MaxCapacity { get; }\n+\n+    public Inventory(int max)\n+    {\n+        MaxCapacity = max\n+    } // missing semicolon\n+\n+    public void Add(string id) { items.Add(id); }\n+}\n```\n"
+}
