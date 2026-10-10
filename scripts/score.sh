@@ -255,8 +255,8 @@ if $COMPARE; then
             ref_track=$(extract_meta_track "${mfiles[1]}")
             IFS='|' read -r ref_d ref_n ref_p ref_m <<< "$ref_track"
             validate_track_fields "${label} ($(basename "${mfiles[1]}"))" "$ref_d" "$ref_n" "$ref_p" "$ref_m" || return 1
+            local m_track="" m_d="" m_n="" m_p="" m_m=""
             for mf in "${mfiles[@]:1}"; do
-                local m_track m_d m_n m_p m_m
                 m_track=$(extract_meta_track "$mf")
                 IFS='|' read -r m_d m_n m_p m_m <<< "$m_track"
                 validate_track_fields "${label} ($(basename "$mf"))" "$m_d" "$m_n" "$m_p" "$m_m" || return 1
@@ -688,8 +688,8 @@ write_manifest() {
             IFS='|' read -r t_docker t_network t_pmode t_model <<< "$ref_track"
 
             local track_mixed=false
+            local m_track="" m_d="" m_n="" m_p="" m_m=""
             for mf in "${meta_files[@]:1}"; do
-                local m_track m_d m_n m_p m_m
                 m_track=$(extract_meta_track "$mf")
                 IFS='|' read -r m_d m_n m_p m_m <<< "$m_track"
                 if [[ "$m_d" != "$t_docker" || "$m_n" != "$t_network" || "$m_m" != "$t_model" || "$m_p" != "$t_pmode" ]]; then
