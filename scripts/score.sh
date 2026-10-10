@@ -531,7 +531,7 @@ emit_task_block() {
             local display_rubrics=$(echo "$declared_rubrics" | tr ',' '\n' | while read slug; do
                 echo "${SLUG_MAP[$slug]:-$slug}"
             done | paste -s -d',' - | sed 's/,/, /g')
-            echo "**Required Rubrics (must score, do NOT mark N/A):** ${display_rubrics}"
+            echo "**Required Rubrics (score ONLY these — do NOT score unlisted rubrics, do NOT mark any of these N/A):** ${display_rubrics}"
             echo ""
         fi
         [[ -n "$rubric_app" ]] && { echo "**Rubric Applicability:**"; echo "$rubric_app"; echo ""; }
