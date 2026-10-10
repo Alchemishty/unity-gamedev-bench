@@ -12,118 +12,110 @@ teardown() {
     teardown_common
 }
 
-@test "valid single-task scorer output produces exact expected score" {
+@test "valid JSON scorer output produces correct 0-100 score" {
     create_result_diff "$RESULTS_DIR" "s01"
-    create_fake_claude "${FIXTURES_DIR}/scorer-output/valid-single.md"
+    # scores: 8+7+8+7+8+6 = 44, count=6, mean=7.333, task_score=73
+    create_fake_json_scorer "$S01_VALID_JSON"
 
     run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto
     echo "$output"
     [ "$status" -eq 0 ]
-    [[ "$output" == *"75%"* ]]
-    [[ "$output" == *"45/"* ]]
+    [[ "$output" == *"73"* ]]
+    [[ "$output" == *"/ 100"* ]]
 }
 
-@test "incomplete scorer output fails validation" {
+@test "scorer process failure exits nonzero" {
     create_result_diff "$RESULTS_DIR" "s01"
-    create_fake_claude "${FIXTURES_DIR}/scorer-output/incomplete.md"
+    create_fake_json_scorer "$S01_VALID_JSON" 55
 
     run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto
     echo "$output"
     [ "$status" -ne 0 ]
+    [[ "$output" == *"Scorer exited"* ]]
 }
 
-@test "unknown task IDs excluded from score" {
+@test "missing required rubric in JSON fails validation" {
     create_result_diff "$RESULTS_DIR" "s01"
-    create_fake_claude "${FIXTURES_DIR}/scorer-output/unknown-task.md"
-
-    run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto
-    echo "$output"
-    [ "$status" -eq 0 ]
-    # z99 excluded: only s01's 30/60 = 50%
-    [[ "$output" == *"50%"* ]]
-}
-
-@test "missing expected task fails validation" {
-    # Both s01 and s02 in results, but scorer only scores s01
-    create_result_diff "$RESULTS_DIR" "s01"
-    create_result_diff "$RESULTS_DIR" "s02"
-    # Need s02 task file too
-    cp "${FIXTURES_DIR}/task-files/s01.md" "${TEST_BENCH_ROOT}/tasks/synthetic/task-02-test.md"
-    create_fake_claude "${FIXTURES_DIR}/scorer-output/missing-task.md"
+    # Missing test_quality (required by s01)
+    local json='{"task":"s01","scores":{"correctness":8,"robustness":7,"readability":8,"architecture":7,"domain_correctness":8},"violations":[]}'
+    create_fake_json_scorer "$json"
 
     run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto
     echo "$output"
     [ "$status" -ne 0 ]
-    [[ "$output" == *"missed tasks"* ]] || [[ "$output" == *"scorer run"* ]]
+    [[ "$output" == *"missing required rubric"* ]]
 }
 
-@test "scorer process failure exits nonzero when all runs fail" {
+@test "extra undeclared rubric in JSON fails validation" {
     create_result_diff "$RESULTS_DIR" "s01"
-    create_fake_claude "${FIXTURES_DIR}/scorer-output/valid-single.md" 55
+    local json='{"task":"s01","scores":{"correctness":8,"robustness":7,"readability":8,"architecture":7,"domain_correctness":8,"test_quality":6,"bonus":9},"violations":[]}'
+    create_fake_json_scorer "$json"
 
     run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto
     echo "$output"
     [ "$status" -ne 0 ]
-    [[ "$output" == *"SCORER FAILURE"* ]]
+    [[ "$output" == *"unexpected rubric"* ]]
 }
 
-@test "mixed valid/invalid runs: only valid runs in mean" {
+@test "out-of-range score fails validation" {
     create_result_diff "$RESULTS_DIR" "s01"
-    # Run 1 and 2 succeed (75%), run 3 fails
-    create_fake_claude_multi \
-        "${FIXTURES_DIR}/scorer-output/valid-single.md" \
-        "${FIXTURES_DIR}/scorer-output/valid-single.md" \
-        "${FIXTURES_DIR}/scorer-output/valid-single.md" \
-        -- 3
+    local json='{"task":"s01","scores":{"correctness":11,"robustness":7,"readability":8,"architecture":7,"domain_correctness":8,"test_quality":6},"violations":[]}'
+    create_fake_json_scorer "$json"
 
-    run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto --runs 3
+    run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto
     echo "$output"
-    [ "$status" -eq 0 ]
-    # Mean should be 75% from 2 valid runs, not dragged down by 0
-    [[ "$output" == *"75%"* ]]
-    [[ "$output" == *"2 valid judgments of 3 attempts"* ]]
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"invalid score"* ]]
 }
 
-@test "failed task gets deterministic zeros for all applicable rubrics" {
-    # s01 has a .failed marker — scorer mentions it but doesn't score rubrics
+@test "failed task with .failed marker auto-zeroes all rubrics" {
     create_result_diff "$RESULTS_DIR" "s01" ""
     create_result_failed "$RESULTS_DIR" "s01" "AGENT_FAILURE:1"
-
-    # Scorer output that mentions the task but has no score rows
-    local scorer_output="${TEST_TEMP}/failed-scorer.md"
-    cat > "$scorer_output" << 'EOF'
-## Task s01: Test Inventory System
-
-**STATUS: FAILED** — Agent crashed. All rubrics score 0.
-
-| Rubric | Score | Justification |
-|---|---|---|
-| Correctness | 0/10 | Failed |
-| Robustness | 0/10 | Failed |
-| Readability | 0/10 | Failed |
-| Architecture | 0/10 | Failed |
-| Domain Correctness | 0/10 | Failed |
-| Test Quality | 0/10 | Failed |
-| **Task Total** | **0/60** | |
-
-## Final Score
-
-**unity-gamedev-bench score: 0% (0/60)**
-EOF
-    create_fake_claude "$scorer_output"
+    # Scorer output doesn't mention s01 — auto-zero kicks in
+    create_fake_json_scorer ""
 
     run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto
     echo "$output"
     [ "$status" -eq 0 ]
-    [[ "$output" == *"0%"* ]] || [[ "$output" == *"0/"* ]]
+    [[ "$output" == *"0"* ]]
+    [[ "$output" == *"/ 100"* ]]
 }
 
-@test "duplicate rubric rows are rejected" {
-    create_result_diff "$RESULTS_DIR" "s01"
-    create_fake_claude "${FIXTURES_DIR}/scorer-output/duplicate-rubric.md"
+@test "infrastructure failure invalidates the run" {
+    create_result_diff "$RESULTS_DIR" "s01" ""
+    create_result_failed "$RESULTS_DIR" "s01" "SETUP_FAILURE:127"
+    create_fake_json_scorer "$S01_VALID_JSON"
 
     run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto
     echo "$output"
     [ "$status" -ne 0 ]
-    [[ "$output" == *"Duplicate rubric"* ]] || [[ "$output" == *"duplicate"* ]] || [[ "$output" == *"INVALID"* ]]
+    [[ "$output" == *"Infrastructure failure"* ]]
+}
+
+@test "manifest contains score_generation digest" {
+    create_result_diff "$RESULTS_DIR" "s01"
+    create_fake_json_scorer "$S01_VALID_JSON"
+
+    run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto
+    echo "$output"
+    [ "$status" -eq 0 ]
+    [ -f "${RESULTS_DIR}/manifest.json" ]
+    local gen
+    gen=$(jq -r '.score_generation' "${RESULTS_DIR}/manifest.json")
+    [[ "$gen" == ugb-v1/* ]]
+}
+
+@test "manifest contains benchmark_score and task_scores" {
+    create_result_diff "$RESULTS_DIR" "s01"
+    create_fake_json_scorer "$S01_VALID_JSON"
+
+    run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto
+    [ "$status" -eq 0 ]
+    [ -f "${RESULTS_DIR}/manifest.json" ]
+    local score
+    score=$(jq -r '.benchmark_score' "${RESULTS_DIR}/manifest.json")
+    [ "$score" -eq 73 ]
+    local task_score
+    task_score=$(jq -r '.task_scores.s01.score' "${RESULTS_DIR}/manifest.json")
+    [ "$task_score" -eq 73 ]
 }

@@ -8,20 +8,24 @@ setup_common() {
     TEST_TEMP=$(mktemp -d)
     export TEST_TEMP
 
-    # Create a minimal BENCH_ROOT structure for tests that need task resolution
     export TEST_BENCH_ROOT="${TEST_TEMP}/bench"
     mkdir -p "${TEST_BENCH_ROOT}/tasks/synthetic"
     mkdir -p "${TEST_BENCH_ROOT}/scripts"
     mkdir -p "${TEST_BENCH_ROOT}/scoring"
+    mkdir -p "${TEST_BENCH_ROOT}/rubrics"
+    mkdir -p "${TEST_BENCH_ROOT}/suites"
 
-    # Copy real scripts
+    # Copy real scripts and config
     cp "${REAL_BENCH_ROOT}/scripts/score.sh" "${TEST_BENCH_ROOT}/scripts/"
     cp "${REAL_BENCH_ROOT}/scripts/run-task.sh" "${TEST_BENCH_ROOT}/scripts/"
     cp "${REAL_BENCH_ROOT}/scripts/run-all.sh" "${TEST_BENCH_ROOT}/scripts/"
-    cp "${REAL_BENCH_ROOT}/scripts/list-tasks.sh" "${TEST_BENCH_ROOT}/scripts/"
+    [[ -f "${REAL_BENCH_ROOT}/scripts/list-tasks.sh" ]] && cp "${REAL_BENCH_ROOT}/scripts/list-tasks.sh" "${TEST_BENCH_ROOT}/scripts/"
+    [[ -f "${REAL_BENCH_ROOT}/scripts/compare.sh" ]] && cp "${REAL_BENCH_ROOT}/scripts/compare.sh" "${TEST_BENCH_ROOT}/scripts/" && chmod +x "${TEST_BENCH_ROOT}/scripts/compare.sh"
     cp "${REAL_BENCH_ROOT}/scoring/scoring-agent-prompt.md" "${TEST_BENCH_ROOT}/scoring/"
+    cp "${REAL_BENCH_ROOT}"/rubrics/0*.md "${TEST_BENCH_ROOT}/rubrics/" 2>/dev/null || true
+    cp "${REAL_BENCH_ROOT}"/suites/*.json "${TEST_BENCH_ROOT}/suites/" 2>/dev/null || true
 
-    # Create a local git repo to serve as the starter project for synthetic task tests
+    # Create a local git repo for synthetic task tests
     local TEST_STARTER="${TEST_TEMP}/ugb-starter-repo"
     mkdir -p "${TEST_STARTER}/Assets"
     echo "// starter" > "${TEST_STARTER}/Assets/Starter.cs"
@@ -29,21 +33,21 @@ setup_common() {
      git -c user.name="Test" -c user.email="test@invalid" commit -q -m "initial" 2>/dev/null)
     TEST_STARTER_SHA=$(cd "$TEST_STARTER" && git rev-parse HEAD)
 
-    # Pre-populate the clone cache so tests don't need network access
     mkdir -p "${TEST_BENCH_ROOT}/.cache/repos"
     cp -R "${TEST_STARTER}/." "${TEST_BENCH_ROOT}/.cache/repos/Alchemishty_ugb-starter"
 
-    # Install fixture task file with repo/sha pointing to the local test repo
-    mkdir -p "${TEST_BENCH_ROOT}/tasks/synthetic"
+    # Fixture task file with repo/sha and rubrics
     cat > "${TEST_BENCH_ROOT}/tasks/synthetic/task-01-test.md" << TASKEOF
 <!--
 repo: https://github.com/Alchemishty/ugb-starter.git
 base_sha: ${TEST_STARTER_SHA}
+difficulty: medium
 rubrics: correctness,robustness,readability,architecture,domain_correctness,test_quality
 -->
 # Task: Test Inventory System
 
 **Category:** Feature
+**Difficulty:** Medium
 
 ## Prompt
 
@@ -54,7 +58,6 @@ rubrics: correctness,robustness,readability,architecture,domain_correctness,test
 All rubrics apply.
 TASKEOF
 
-    # Prepend fake bin dir to PATH
     export FAKE_BIN="${TEST_TEMP}/bin"
     mkdir -p "$FAKE_BIN"
     export PATH="${FAKE_BIN}:${PATH}"
@@ -65,7 +68,6 @@ teardown_common() {
 }
 
 # Create a fake agent that writes a file and exits with given code
-# Usage: create_fake_agent [exit_code] [write_file]
 create_fake_agent() {
     local exit_code="${1:-0}"
     local write_file="${2:-true}"
@@ -80,9 +82,7 @@ AGENT
     chmod +x "${FAKE_BIN}/test-agent"
 }
 
-# Create a fake claude that outputs a fixture file
-# Reads and discards stdin (real scorer receives input via stdin)
-# Usage: create_fake_claude <fixture_path> [exit_code]
+# Create a fake claude that reads stdin and outputs a fixture file
 create_fake_claude() {
     local fixture_path="$1"
     local exit_code="${2:-0}"
@@ -97,63 +97,29 @@ CLAUDE
     chmod +x "${FAKE_BIN}/claude"
 }
 
-# Create a fake claude that cycles through fixture files (for multi-run tests)
-# Usage: create_fake_claude_multi <fixture1> <fixture2> ... -- [fail_on_run_N]
-create_fake_claude_multi() {
-    local fixtures=()
-    local fail_run=0
-    local parsing_fixtures=true
-    for arg in "$@"; do
-        if [[ "$arg" == "--" ]]; then
-            parsing_fixtures=false
-            continue
-        fi
-        if $parsing_fixtures; then
-            fixtures+=("$arg")
-        else
-            fail_run="$arg"
-        fi
-    done
-
-    local counter_file="${TEST_TEMP}/claude_call_counter"
-    echo "0" > "$counter_file"
-
-    # Write all fixture paths to a file the fake claude can read
-    local fixtures_file="${TEST_TEMP}/claude_fixtures"
-    printf '%s\n' "${fixtures[@]}" > "$fixtures_file"
-
-    cat > "${FAKE_BIN}/claude" << 'CLAUDE'
+# Create a fake claude that outputs inline JSON scorer results
+# Usage: create_fake_json_scorer <json_lines_string>
+create_fake_json_scorer() {
+    local json_content="$1"
+    local exit_code="${2:-0}"
+    local json_file="${TEST_TEMP}/scorer-output.json"
+    echo "$json_content" > "$json_file"
+    cat > "${FAKE_BIN}/claude" << CLAUDE
 #!/bin/bash
 cat >/dev/null 2>&1 || true
-COUNTER_FILE="COUNTER_PLACEHOLDER"
-FIXTURES_FILE="FIXTURES_PLACEHOLDER"
-FAIL_RUN="FAIL_PLACEHOLDER"
-
-count=$(cat "$COUNTER_FILE")
-((count++))
-echo "$count" > "$COUNTER_FILE"
-
-if [[ "$FAIL_RUN" -gt 0 && "$count" -eq "$FAIL_RUN" ]]; then
-    exit 55
+if [[ "${exit_code}" -ne 0 ]]; then
+    exit ${exit_code}
 fi
-
-fixture=$(sed -n "${count}p" "$FIXTURES_FILE")
-if [[ -n "$fixture" && -f "$fixture" ]]; then
-    cat "$fixture"
-else
-    # Reuse last fixture if we run out
-    tail -1 "$FIXTURES_FILE" | xargs cat
-fi
+cat "${json_file}"
 CLAUDE
-    # Use perl for in-place edit (portable across macOS and Linux, unlike sed -i)
-    perl -pi -e "s|COUNTER_PLACEHOLDER|${counter_file}|" "${FAKE_BIN}/claude"
-    perl -pi -e "s|FIXTURES_PLACEHOLDER|${fixtures_file}|" "${FAKE_BIN}/claude"
-    perl -pi -e "s|FAIL_PLACEHOLDER|${fail_run}|" "${FAKE_BIN}/claude"
     chmod +x "${FAKE_BIN}/claude"
 }
 
+# Standard JSON scorer output for s01 with all 6 rubrics scored 7-8
+# task_score = mean(8,7,8,7,8,6) * 10 = 7.33 * 10 = 73
+S01_VALID_JSON='{"task":"s01","scores":{"correctness":8,"robustness":7,"readability":8,"architecture":7,"domain_correctness":8,"test_quality":6},"violations":[]}'
+
 # Create a results directory with a .diff file for a task
-# Usage: create_result_diff <results_dir> <task_id> [content]
 create_result_diff() {
     local dir="$1" id="$2" content="${3:-}"
     mkdir -p "$dir"
@@ -180,7 +146,7 @@ create_result_failed() {
     echo "$reason" > "${dir}/${id}.failed"
 }
 
-# Create a run-request.json
+# Create a run-request.json (v0.1 format)
 create_run_request() {
     local dir="$1"
     shift
@@ -190,13 +156,25 @@ create_run_request() {
     local ids_json=$(printf '"%s",' "${task_ids[@]}" | sed 's/,$//')
     cat > "${dir}/run-request.json" << EOF
 {
-  "timestamp": "2026-10-09T00:00:00Z",
+  "timestamp": "2026-10-10T00:00:00Z",
+  "suite": "custom",
+  "suite_version": "custom",
   "requested_tasks": ${count},
   "task_ids": [${ids_json}],
   "agent": "test-agent",
   "label": "test",
   "model": "test",
-  "filter": "all"
+  "prompt_mode": "guided",
+  "docker": false,
+  "network": "enabled"
 }
 EOF
+}
+
+# Install additional synthetic task files (s02, s03, etc.) using the same fixture
+install_task_file() {
+    local id="$1"
+    local num="${id#s}"
+    num=$(printf '%02d' "$num")
+    cp "${TEST_BENCH_ROOT}/tasks/synthetic/task-01-test.md" "${TEST_BENCH_ROOT}/tasks/synthetic/task-${num}-test.md"
 }

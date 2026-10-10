@@ -13,8 +13,7 @@ teardown() {
 }
 
 @test "empty results directory exits nonzero" {
-    # No .diff or .failed files — just an empty dir
-    create_fake_claude "${FIXTURES_DIR}/scorer-output/valid-single.md"
+    create_fake_json_scorer "$S01_VALID_JSON"
 
     run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto
     echo "$output"
@@ -22,23 +21,20 @@ teardown() {
     [[ "$output" == *"No task results found"* ]]
 }
 
-@test "unknown task ID (no matching benchmark task) exits nonzero" {
-    # z99 doesn't exist as a benchmark task
+@test "unknown task ID exits nonzero" {
     echo "diff --git a/test b/test" > "${RESULTS_DIR}/z99.diff"
-    create_fake_claude "${FIXTURES_DIR}/scorer-output/valid-single.md"
+    create_fake_json_scorer ""
 
     run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto
     echo "$output"
     [ "$status" -ne 0 ]
-    [[ "$output" == *"do not match any scored benchmark task"* ]]
-    [[ "$output" == *"z99"* ]]
+    [[ "$output" == *"does not match a benchmark task"* ]]
 }
 
 @test "mixed valid and unknown task IDs exits nonzero" {
-    # s01 is valid, z99 is not
     create_result_diff "$RESULTS_DIR" "s01"
     echo "diff --git a/test b/test" > "${RESULTS_DIR}/z99.diff"
-    create_fake_claude "${FIXTURES_DIR}/scorer-output/valid-single.md"
+    create_fake_json_scorer "$S01_VALID_JSON"
 
     run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto
     echo "$output"
@@ -46,21 +42,11 @@ teardown() {
     [[ "$output" == *"z99"* ]]
 }
 
-@test "empty directory does not produce 0/0 score" {
-    create_fake_claude "${FIXTURES_DIR}/scorer-output/valid-single.md"
-
-    run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --assemble-only
-    echo "$output"
-    [ "$status" -ne 0 ]
-    # Must not contain a score line
-    [[ "$output" != *"0% (0/0)"* ]]
-}
-
-@test "assemble-only with unknown task ID exits nonzero" {
+@test "assemble-only with unknown task exits nonzero" {
     echo "diff --git a/test b/test" > "${RESULTS_DIR}/z99.diff"
 
     run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --assemble-only
     echo "$output"
     [ "$status" -ne 0 ]
-    [[ "$output" == *"do not match any scored benchmark task"* ]]
+    [[ "$output" == *"does not match a benchmark task"* ]]
 }
