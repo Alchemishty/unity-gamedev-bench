@@ -175,12 +175,14 @@ for task_id in "${TASKS[@]}"; do
     mkdir -p "$CACHE_DIR"
 
     if [[ -d "$cached_repo/.git" ]]; then
-        git -C "$cached_repo" fetch -q 2>/dev/null || true
+        git -C "$cached_repo" fetch --depth 1 origin "$sha" -q 2>/dev/null || \
+            git -C "$cached_repo" fetch -q 2>/dev/null || true
     else
-        echo "  Cloning ${cache_name}..."
-        if ! git clone -q "$repo" "$cached_repo"; then
+        echo "  Cloning ${cache_name} (shallow)..."
+        if ! git clone --filter=blob:none --no-checkout -q "$repo" "$cached_repo"; then
             echo "  Error: Clone failed for ${repo}"; exit 1
         fi
+        git -C "$cached_repo" fetch --depth 1 origin "$sha" -q 2>/dev/null || true
     fi
 
     snapshot_dir="${SNAPSHOT_BASE}/${task_id}"

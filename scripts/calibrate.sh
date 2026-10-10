@@ -59,8 +59,15 @@ for fixture in "${FIXTURES_DIR}"/*.json(N); do
 
     echo "  Fixture: ${name} (expected overall: ${expected_low}–${expected_high})"
 
-    # Build scoring input
-    TASK_FILE=$(find "${BENCH_ROOT}/tasks" -name "*.md" -path "*${task_id}*" | head -1)
+    # Build scoring input — resolve task file by ID prefix
+    local prefix="${task_id%%[0-9]*}"
+    local num="${task_id#${prefix}}"
+    local p="$(printf '%02d' "$num" 2>/dev/null || echo "$num")"
+    TASK_FILE=""
+    case "$prefix" in
+        s) TASK_FILE=$(find "${BENCH_ROOT}/tasks/synthetic" -name "task-${p}-*.md" 2>/dev/null | head -1) ;;
+        m) TASK_FILE=$(find "${BENCH_ROOT}/tasks/real-world/mirror" -name "task-m${p}-*.md" 2>/dev/null | head -1) ;;
+    esac
     PROMPT=""
     [[ -f "$TASK_FILE" ]] && PROMPT=$(awk '/^## Prompt$/{p=1;next} p&&/^## /{exit} p&&/^>/{gsub(/^> ?/,"");print}' "$TASK_FILE" | sed '/^$/d')
 
@@ -115,6 +122,13 @@ for fixture in "${FIXTURES_DIR}"/*.json(N); do
         SPREAD=$(echo "$MAX $MIN" | awk '{printf "%.1f", $1-$2}')
         echo "    Spread: ${SPREAD} (min=${MIN}, max=${MAX})"
 
+        MAX_SPREAD=20
+        SPREAD_INT=$(printf '%.0f' "$SPREAD")
+        if [[ $SPREAD_INT -gt $MAX_SPREAD ]]; then
+            echo "    ⚠ EXCESSIVE SPREAD: ${SPREAD} > ${MAX_SPREAD} threshold"
+            ALL_PASS=false
+        fi
+
         # Check against expected range
         MEAN=$(printf '%s\n' "${SCORES[@]}" | awk '{s+=$1} END{printf "%.1f", s/NR}')
         MEAN_INT=$(printf '%.0f' "$MEAN")
@@ -131,7 +145,10 @@ done
 echo "============================================================"
 if $ALL_PASS; then
     echo "  All fixtures within expected ranges."
+    echo "============================================================"
+    exit 0
 else
-    echo "  Some fixtures outside expected ranges — review rubric anchors."
+    echo "  FAILED: Some fixtures outside expected ranges or excessive spread."
+    echo "============================================================"
+    exit 1
 fi
-echo "============================================================"

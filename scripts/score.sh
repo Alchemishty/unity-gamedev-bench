@@ -299,15 +299,22 @@ typeset -A SCORES  # SCORES[task_id:rubric_slug] = score
 PARSE_ERRORS=()
 
 typeset -A SCORER_LINES
+SCORER_UNKNOWN=()
 while IFS= read -r line; do
     [[ -z "$line" ]] && continue
+    # Skip non-JSON lines (prose the scorer sometimes adds)
+    echo "$line" | jq empty 2>/dev/null || continue
     parsed_tid=$(echo "$line" | jq -r '.task // empty' 2>/dev/null)
     [[ -z "$parsed_tid" ]] && continue
     if [[ -n "${SCORER_LINES[$parsed_tid]:-}" ]]; then
         PARSE_ERRORS+=("${parsed_tid}: duplicate entry in scorer output")
     fi
+    if [[ ! " ${TASK_IDS[*]} " =~ " ${parsed_tid} " ]]; then
+        SCORER_UNKNOWN+=("$parsed_tid")
+    fi
     SCORER_LINES[$parsed_tid]="$line"
 done < "$OUTPUT_FILE"
+[[ ${#SCORER_UNKNOWN[@]} -gt 0 ]] && echo "  WARNING: Scorer included unknown tasks (ignored): ${SCORER_UNKNOWN[*]}"
 
 for tid in "${TASK_IDS[@]}"; do
     expected_rubrics="${TASK_RUBRICS[$tid]}"
