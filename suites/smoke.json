@@ -1,0 +1,7 @@
+{
+  "name": "smoke",
+  "version": "v1",
+  "description": "Quick 3-task development check",
+  "tasks": ["s01", "m04", "m13"],
+  "task_count": 3
+}

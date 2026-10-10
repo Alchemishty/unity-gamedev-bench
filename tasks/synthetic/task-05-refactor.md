@@ -1,6 +1,7 @@
 <!--
 repo: https://github.com/Alchemishty/ugb-starter.git
 base_sha: c74a25490ef57dab555cea586a301202c93a7a93
+difficulty: medium
 rubrics: correctness,robustness,readability,architecture,domain_correctness,test_quality
 -->
 # Task 5: Clean Up Messy Script

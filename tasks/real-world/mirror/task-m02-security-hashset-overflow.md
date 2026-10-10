@@ -4,6 +4,7 @@ base_sha: 503a1b5e4b50a5d1257a6d39afc7862d194e449e
 reference_pr: 4115
 reference_merge_sha: 66347349d7a368b15e746220d508667db709ceda
 merge_date: 2026-06-27
+difficulty: medium
 rubrics: correctness,robustness,readability,architecture,domain_correctness,test_quality
 -->
 # Task: Security — ReadHashSet Allocation Attack and Unbatcher Overflow

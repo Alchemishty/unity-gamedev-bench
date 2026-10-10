@@ -4,6 +4,7 @@ base_sha: 81d53df55a9569c996f41ba25c5aa5c872bf62a7
 reference_pr: 4084
 reference_merge_sha: 263bf966811e3e0d191da19bbc7848b63c89c5c4
 merge_date: 2026-01-14
+difficulty: hard
 rubrics: correctness,robustness,readability,architecture,domain_correctness,test_quality
 -->
 # Task: SyncVar Hook Race Condition on Spawn

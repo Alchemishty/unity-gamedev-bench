@@ -4,6 +4,7 @@ base_sha: 535101b0587dfb767b3fe47a082b7dd11528e99e
 reference_pr: 4113
 reference_merge_sha: 9491a0cdbf1305be84115713d99d162bda7f605b
 merge_date: 2026-06-17
+difficulty: hard
 rubrics: correctness,robustness,readability,architecture,domain_correctness,test_quality
 -->
 # Task: Malformed Batch Queue Growth Vulnerability

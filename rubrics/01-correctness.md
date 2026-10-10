@@ -1,31 +1,16 @@
-# Rubric 1: Correctness
+# Correctness (0–10)
 
-**Type:** Universal
-**Scale:** 0-10
+Does the code do what the task asked?
 
-Does the code do what the task asked? No runtime errors, no logic bugs, edge cases handled.
-
-## Scoring Criteria
-
-| Score | Criteria |
+| Score | Observable Evidence |
 |---|---|
-| 0-2 | Code doesn't compile, or has fundamental logic errors that prevent the feature from working at all. |
-| 3-4 | Compiles but has runtime bugs or misses core requirements stated in the task prompt. |
-| 5-6 | Core functionality works, but edge cases cause failures (boundary values, empty inputs, concurrent access). |
-| 7-8 | All requirements met, edge cases handled, no runtime errors under normal operation. |
-| 9-10 | All requirements met, edge cases handled, and interaction with existing code is correct — no regressions, existing tests still pass, no breakage of pre-existing features. |
+| 0 | No meaningful implementation. Empty diff or completely wrong approach. |
+| 2 | Attempts the task but does not compile, or compiles with fundamental logic errors that prevent any functionality. |
+| 4 | Partially implements the requested behavior. Main path may work but core requirements are missing. |
+| 6 | Main path works correctly. Important edge cases or secondary requirements are missing. |
+| 8 | Complete implementation. All stated requirements met with minor defects (trivial edge cases, cosmetic issues). |
+| 10 | Complete, correct, regression-free. All requirements, edge cases, and interaction with existing code handled. |
 
-## What to Check
-
-- Does the output satisfy every requirement in the task prompt?
-- Does the code compile without errors?
-- Are edge cases handled (null inputs, empty collections, boundary values, overflow)?
-- Does the new code interact correctly with pre-existing scripts?
-- Are there logic bugs (off-by-one, wrong condition, missing break, race condition)?
-- For multiplayer tasks: does the sync mechanism actually work for all clients?
-
-## Scoring Notes
-
-- A 10 does not require perfection in style or architecture — only in function.
-- Partial credit: if 3 of 4 requirements are met, score in the 6-8 range depending on how critical the missing requirement is.
-- Compilation errors that would be trivially fixable (missing using statement) dock 1-2 points, not 8.
+Verification override:
+- Compile failure with C# diagnostics → cap at 2.
+- Test regression (new failures vs baseline) → cap at 4.

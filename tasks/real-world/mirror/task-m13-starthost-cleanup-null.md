@@ -4,6 +4,7 @@ base_sha: 3a6945f2270afe310ef3e99b7c034907f633bfca
 reference_pr: 4081
 reference_merge_sha: b4083a51fdfd6321dbd460158fbed9b4cf8c1842
 merge_date: 2026-01-11
+difficulty: easy
 rubrics: correctness,robustness,readability,domain_correctness,test_quality
 -->
 

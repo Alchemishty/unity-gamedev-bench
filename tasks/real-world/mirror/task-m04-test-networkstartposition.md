@@ -4,6 +4,7 @@ base_sha: bbcb417bdfeffb181abd0dfaaab19a15ceb78b66
 reference_pr: 4090
 reference_merge_sha: 5a77135250489feaa8283f7ed2d7d27760b2e202
 merge_date: 2026-02-06
+difficulty: easy
 rubrics: correctness,test_quality
 -->
 # Task: Add EditMode Tests for NetworkStartPosition

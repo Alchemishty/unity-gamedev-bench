@@ -4,6 +4,7 @@ base_sha: e5f664d7131dad88742e65139f66da4d8bf6a181
 reference_pr: 4048
 reference_merge_sha: b980ea4a62a8ee7b51de96e455df207b32b876c8
 merge_date: 2025-08-05
+difficulty: hard
 rubrics: correctness,robustness,readability,architecture,domain_correctness,test_quality
 -->
 # Task: Commands Not Immediately Invoked in Host Mode
