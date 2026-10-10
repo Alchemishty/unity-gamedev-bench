@@ -164,6 +164,7 @@ if [[ -n "$SETUP_SCRIPT" ]]; then
     resolved="$SETUP_SCRIPT"
     [[ ! -f "$resolved" ]] && resolved="${BENCH_ROOT}/${SETUP_SCRIPT}"
     [[ ! -f "$resolved" ]] && { echo "Error: Setup script not found: ${SETUP_SCRIPT}"; exit 1; }
+    resolved="${resolved:A}"
     if $USE_DOCKER; then
         # In Docker mode, setup runs inside the container via entrypoint.sh — just resolve the path here
         echo "Setup script will run inside Docker: ${resolved}"
