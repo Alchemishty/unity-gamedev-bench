@@ -117,11 +117,13 @@ else
     CACHED_REPO="${CACHE_DIR}/${cache_name}"
 
     if [[ -d "$CACHED_REPO/.git" ]]; then
-        git -C "$CACHED_REPO" fetch -q 2>/dev/null || true
+        git -C "$CACHED_REPO" fetch --depth 1 origin "$TASK_BASE_SHA" -q 2>/dev/null || \
+            git -C "$CACHED_REPO" fetch -q 2>/dev/null || true
     else
-        if ! git clone -q "$TASK_REPO" "$CACHED_REPO"; then
+        if ! git clone --filter=blob:none --no-checkout -q "$TASK_REPO" "$CACHED_REPO"; then
             echo "  [${TASK_ID}] INFRA ERROR: Clone failed"; exit 2
         fi
+        git -C "$CACHED_REPO" fetch --depth 1 origin "$TASK_BASE_SHA" -q 2>/dev/null || true
     fi
 
     if ! cp -R "${CACHED_REPO}/." "${WORK_DIR}/"; then

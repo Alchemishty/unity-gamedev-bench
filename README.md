@@ -1,6 +1,6 @@
 # unity-gamedev-bench
 
-Benchmark for evaluating AI coding agents on Unity game development tasks. 10 fixed tasks from 2 repositories, 6 rubrics, scored 0–100. Runs in under 40 minutes.
+Benchmark for evaluating AI coding agents on Unity game development tasks. 10 fixed tasks from 2 repositories, 6 rubrics, scored 0–100. Targets 30–40 minutes depending on agent and hardware.
 
 ## Quick Start
 
@@ -43,7 +43,7 @@ Benchmark for evaluating AI coding agents on Unity game development tasks. 10 fi
 # Smoke test (3 tasks, ~10 min)
 ./scripts/run-all.sh --agent <cmd> --label test --suite smoke --parallel 1
 
-# Standard (10 tasks, ~15 min with 3 parallel)
+# Standard (10 tasks, ~30-40 min with 3 parallel)
 ./scripts/run-all.sh --agent <cmd> --label test --suite standard
 ```
 

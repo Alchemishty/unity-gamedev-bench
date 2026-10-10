@@ -599,7 +599,7 @@ if command -v jq &>/dev/null; then
     jq -n \
         --arg gen "$SCORE_GENERATION" \
         --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-        --arg commit "$(cd "$BENCH_ROOT" && git rev-parse --short HEAD 2>/dev/null || echo 'unknown')" \
+        --arg commit "$(cd "$BENCH_ROOT" && git rev-parse HEAD 2>/dev/null || echo 'unknown')" \
         --argjson score "$BENCHMARK_SCORE" \
         --arg precise "$BENCHMARK_PRECISE" \
         --argjson tasks "$TASK_SCORES_JSON" \

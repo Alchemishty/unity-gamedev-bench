@@ -54,11 +54,26 @@ if [[ -z "$PREVIOUS" ]]; then
     LATEST_MATCH=""
     LATEST_TS=""
 
+    # Extract current run conditions for matching
+    CUR_PMODE=$(jq -r 'if .environment.prompt_mode != null then (.environment.prompt_mode | tostring) else "" end' "${CURRENT}/manifest.json" 2>/dev/null)
+    CUR_NET=$(jq -r 'if .environment.network != null then (.environment.network | tostring) else "" end' "${CURRENT}/manifest.json" 2>/dev/null)
+    CUR_DOCKER=$(jq -r 'if .environment.docker != null then (.environment.docker | tostring) else "" end' "${CURRENT}/manifest.json" 2>/dev/null)
+    CUR_TASK_SET=$(jq -r '.task_scores | keys | sort | join(",")' "${CURRENT}/manifest.json" 2>/dev/null)
+
     for manifest in "${BENCH_ROOT}"/results/*/manifest.json(N); do
         dir=$(dirname "$manifest")
         [[ "$(basename "$dir")" == "$CURRENT_LABEL" ]] && continue
         gen=$(jq -r '.score_generation // empty' "$manifest" 2>/dev/null)
         [[ "$gen" != "$CURRENT_GEN" ]] && continue
+        # Check conditions match
+        p_pmode=$(jq -r 'if .environment.prompt_mode != null then (.environment.prompt_mode | tostring) else "" end' "$manifest" 2>/dev/null)
+        p_net=$(jq -r 'if .environment.network != null then (.environment.network | tostring) else "" end' "$manifest" 2>/dev/null)
+        p_docker=$(jq -r 'if .environment.docker != null then (.environment.docker | tostring) else "" end' "$manifest" 2>/dev/null)
+        p_tasks=$(jq -r '.task_scores | keys | sort | join(",")' "$manifest" 2>/dev/null)
+        [[ -n "$CUR_PMODE" && -n "$p_pmode" && "$CUR_PMODE" != "$p_pmode" ]] && continue
+        [[ -n "$CUR_NET" && -n "$p_net" && "$CUR_NET" != "$p_net" ]] && continue
+        [[ -n "$CUR_DOCKER" && -n "$p_docker" && "$CUR_DOCKER" != "$p_docker" ]] && continue
+        [[ "$CUR_TASK_SET" != "$p_tasks" ]] && continue
         ts=$(jq -r '.timestamp // empty' "$manifest" 2>/dev/null)
         if [[ -z "$LATEST_TS" || "$ts" > "$LATEST_TS" ]]; then
             LATEST_TS="$ts"
@@ -134,7 +149,13 @@ if $COMPARABLE; then
     echo "  unity-gamedev-bench — Run Comparison"
 else
     echo "  unity-gamedev-bench — Side-by-Side (NON-COMPARABLE)"
-    echo "  Score generations differ. Absolute deltas are not meaningful."
+    if [[ "$CUR_GEN" != "$PREV_GEN" ]]; then
+        echo "  Reason: Score generations differ."
+    fi
+    if [[ ${#CONDITION_WARNINGS[@]} -gt 0 ]]; then
+        echo "  Reason: Evaluation conditions differ: ${CONDITION_WARNINGS[*]}"
+    fi
+    echo "  Absolute deltas are not meaningful."
 fi
 echo "============================================================"
 echo ""

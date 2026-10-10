@@ -60,9 +60,9 @@ for fixture in "${FIXTURES_DIR}"/*.json(N); do
     echo "  Fixture: ${name} (expected overall: ${expected_low}–${expected_high})"
 
     # Build scoring input — resolve task file by ID prefix
-    local prefix="${task_id%%[0-9]*}"
-    local num="${task_id#${prefix}}"
-    local p="$(printf '%02d' "$num" 2>/dev/null || echo "$num")"
+    prefix="${task_id%%[0-9]*}"
+    num="${task_id#${prefix}}"
+    p="$(printf '%02d' "$num" 2>/dev/null || echo "$num")"
     TASK_FILE=""
     case "$prefix" in
         s) TASK_FILE=$(find "${BENCH_ROOT}/tasks/synthetic" -name "task-${p}-*.md" 2>/dev/null | head -1) ;;
@@ -122,7 +122,7 @@ for fixture in "${FIXTURES_DIR}"/*.json(N); do
         SPREAD=$(echo "$MAX $MIN" | awk '{printf "%.1f", $1-$2}')
         echo "    Spread: ${SPREAD} (min=${MIN}, max=${MAX})"
 
-        MAX_SPREAD=20
+        MAX_SPREAD=5
         SPREAD_INT=$(printf '%.0f' "$SPREAD")
         if [[ $SPREAD_INT -gt $MAX_SPREAD ]]; then
             echo "    ⚠ EXCESSIVE SPREAD: ${SPREAD} > ${MAX_SPREAD} threshold"
