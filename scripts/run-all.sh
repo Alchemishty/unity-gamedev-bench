@@ -18,7 +18,6 @@ Options:
   --label <name>        Results directory label (required)
   --parallel <n>        Concurrent tasks (default: 3, use 1 for sequential)
   --setup <script>      Setup script passed to each task
-  --prompt-mode <m>     'guided' (default) or 'diagnostic'
   --model <id>          Model identifier for metadata
   --docker              Run agent inside Docker sandbox
   --docker-image <i>    Docker image (default: ugb-sandbox)
@@ -28,7 +27,7 @@ EOF
     exit "${1:-0}"
 }
 
-AGENT_CMD="" LABEL="" SETUP_SCRIPT="" SUITE_NAME="standard" PROMPT_MODE="guided"
+AGENT_CMD="" LABEL="" SETUP_SCRIPT="" SUITE_NAME="standard"
 MODEL_ID="unknown" USE_DOCKER=false CLOSED_BOOK=false DOCKER_IMAGE=""
 PARALLEL=3 EXPLICIT_IDS=()
 
@@ -39,7 +38,7 @@ while [[ $# -gt 0 ]]; do
         --setup)        SETUP_SCRIPT="$2"; shift 2 ;;
         --suite)        SUITE_NAME="$2"; shift 2 ;;
         --parallel)     PARALLEL="$2"; shift 2 ;;
-        --prompt-mode)  PROMPT_MODE="$2"; shift 2 ;;
+        --prompt-mode)  shift 2 ;; # Accepted but ignored in v0.1
         --model)        MODEL_ID="$2"; shift 2 ;;
         --docker)       USE_DOCKER=true; shift ;;
         --docker-image) DOCKER_IMAGE="$2"; USE_DOCKER=true; shift 2 ;;
@@ -214,7 +213,7 @@ if command -v jq &>/dev/null; then
         --arg agent "$AGENT_CMD" \
         --arg label "$LABEL" \
         --arg model "$MODEL_ID" \
-        --arg pmode "$PROMPT_MODE" \
+        --arg pmode "guided" \
         --argjson docker "$($USE_DOCKER && echo true || echo false)" \
         --arg network "$NETWORK_MODE" \
         '{timestamp:$ts, suite:$suite, suite_version:$suite_ver, requested_tasks:$total, parallel:$parallel, task_ids:$task_ids, agent:$agent, label:$label, model:$model, prompt_mode:$pmode, docker:$docker, network:$network}' \
@@ -224,7 +223,6 @@ fi
 # ---- Build extra args for run-task.sh ----
 EXTRA_ARGS=()
 [[ -n "$SETUP_SCRIPT" ]] && EXTRA_ARGS+=(--setup "$SETUP_SCRIPT")
-[[ "$PROMPT_MODE" != "guided" ]] && EXTRA_ARGS+=(--prompt-mode "$PROMPT_MODE")
 [[ "$MODEL_ID" != "unknown" ]] && EXTRA_ARGS+=(--model "$MODEL_ID")
 $USE_DOCKER && EXTRA_ARGS+=(--docker)
 [[ -n "$DOCKER_IMAGE" ]] && EXTRA_ARGS+=(--docker-image "$DOCKER_IMAGE")

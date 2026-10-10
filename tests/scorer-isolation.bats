@@ -35,6 +35,9 @@ CLAUDE
     [[ "$args" == *"--disable-slash-commands"* ]]
     [[ "$args" == *"--strict-mcp-config"* ]]
     [[ "$args" != *"--dangerously-skip-permissions"* ]]
+    # Scorer model must be passed to CLI
+    [[ "$args" == *"--model"* ]]
+    [[ "$args" == *"test"* ]]
 }
 
 @test "scorer receives input via stdin" {

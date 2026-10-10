@@ -14,7 +14,6 @@ Options:
   --label <name>        Label for results directory
   --setup <script>      Script to run before the agent
   --snapshot-dir <dir>  Pre-prepared immutable snapshot (skips clone/fetch)
-  --prompt-mode <m>     'guided' (default) or 'diagnostic'
   --model <id>          Model identifier for metadata
   --docker              Run agent inside Docker sandbox
   --docker-image <i>    Docker image (default: ugb-sandbox)
@@ -24,7 +23,7 @@ EOF
     exit "${1:-0}"
 }
 
-TASK_ID="" AGENT_CMD="" LABEL="" SETUP_SCRIPT="" SNAPSHOT_DIR="" PROMPT_MODE="guided"
+TASK_ID="" AGENT_CMD="" LABEL="" SETUP_SCRIPT="" SNAPSHOT_DIR=""
 MODEL_ID="unknown" USE_DOCKER=false CLOSED_BOOK=false DOCKER_IMAGE=""
 
 while [[ $# -gt 0 ]]; do
@@ -33,7 +32,7 @@ while [[ $# -gt 0 ]]; do
         --label)        LABEL="$2"; shift 2 ;;
         --setup)        SETUP_SCRIPT="$2"; shift 2 ;;
         --snapshot-dir) SNAPSHOT_DIR="$2"; shift 2 ;;
-        --prompt-mode)  PROMPT_MODE="$2"; shift 2 ;;
+        --prompt-mode)  shift 2 ;; # Accepted but ignored in v0.1
         --model)        MODEL_ID="$2"; shift 2 ;;
         --docker)       USE_DOCKER=true; shift ;;
         --docker-image) DOCKER_IMAGE="$2"; USE_DOCKER=true; shift 2 ;;
@@ -84,13 +83,7 @@ TASK_REPO=$(extract_meta "repo"); [[ -z "$TASK_REPO" ]] && TASK_REPO=$(extract_f
 TASK_BASE_SHA=$(extract_meta "base_sha"); [[ -z "$TASK_BASE_SHA" ]] && TASK_BASE_SHA=$(extract_field "Base Commit")
 
 # ---- Extract ONLY the user-facing prompt (blockquotes under ## Prompt) ----
-PROMPT=""
-if [[ "$PROMPT_MODE" == "diagnostic" ]]; then
-    PROMPT=$(awk '/^## Prompt Variant: Diagnostic/{f=1;next} f&&/^>/{gsub(/^> ?/,"");print} f&&!/^>/&&!/^$/{exit}' "$TASK_FILE" | sed '/^$/d')
-fi
-if [[ -z "$PROMPT" ]]; then
-    PROMPT=$(awk '/^## Prompt$/{p=1;next} p&&/^## /{exit} p&&/^>/{gsub(/^> ?/,"");print}' "$TASK_FILE" | sed '/^$/d')
-fi
+PROMPT=$(awk '/^## Prompt$/{p=1;next} p&&/^## /{exit} p&&/^>/{gsub(/^> ?/,"");print}' "$TASK_FILE" | sed '/^$/d')
 [[ -z "$PROMPT" ]] && { echo "Error: Could not extract prompt from ${TASK_FILE}"; exit 1; }
 
 # ---- Prepare working directory ----
@@ -252,7 +245,7 @@ if command -v jq &>/dev/null; then
         --argjson dur "$TASK_DURATION" \
         --arg acmd "$AGENT_CMD" \
         --arg model "$MODEL_ID" \
-        --arg pmode "$PROMPT_MODE" \
+        --arg pmode "guided" \
         --argjson docker "$($USE_DOCKER && echo true || echo false)" \
         --arg net "$NETWORK_MODE" \
         --argjson aexit "$AGENT_EXIT" \
@@ -271,7 +264,7 @@ else
   "duration_seconds": ${TASK_DURATION},
   "agent_cmd": "$(echo "$AGENT_CMD" | sed 's/"/\\"/g')",
   "model": "$(echo "$MODEL_ID" | sed 's/"/\\"/g')",
-  "prompt_mode": "${PROMPT_MODE}",
+  "prompt_mode": "guided",
   "docker": $($USE_DOCKER && echo true || echo false),
   "network": "${NETWORK_MODE}",
   "agent_exit_code": ${AGENT_EXIT},
