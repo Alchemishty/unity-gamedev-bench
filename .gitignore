@@ -24,6 +24,9 @@ scratch/
 # Benchmark results (contain solution diffs — must not be tracked)
 results/
 
+# Unity license files (personal, do not share)
+docker/license/
+
 # Repo clone cache
 .cache/
 docs/

@@ -4,7 +4,7 @@ base_sha: 911643faa6c5ecd00f69460d7ca2210dff24ec15
 reference_pr: 905
 reference_merge_sha: a7dab563e088f70597cd3c6f92b1c7b96cac2162
 merge_date: 2025-04-02
-rubrics: correctness,robustness,readability,domain_correctness,test_quality
+rubrics: correctness,robustness,readability,domain_correctness
 -->
 # Task: NullReferenceException on Session Removal
 

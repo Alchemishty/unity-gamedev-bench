@@ -498,16 +498,23 @@ echo ""
 # ---- Assemble scoring input ----
 echo "Assembling scoring input..."
 
+SLUG_TO_DISPLAY=(correctness Correctness robustness Robustness readability Readability architecture Architecture domain_correctness "Domain Correctness" test_quality "Test Quality")
+typeset -A SLUG_MAP
+for i in $(seq 1 2 ${#SLUG_TO_DISPLAY[@]}); do
+    SLUG_MAP[${SLUG_TO_DISPLAY[$i]}]="${SLUG_TO_DISPLAY[$((i+1))]}"
+done
+
 emit_task_block() {
     local id="$1" dir="$2" label="${3:-}"
     local task_file=$(resolve_task_file_for_id "$id")
-    local title="$id" prompt="" scoring_notes="" rubric_app=""
+    local title="$id" prompt="" scoring_notes="" rubric_app="" declared_rubrics=""
 
     if [[ -n "$task_file" && -f "$task_file" ]]; then
         title=$(grep -m1 '^# ' "$task_file" | sed 's/^# //' | sed 's/^Task[: ]*//')
         prompt=$(extract_prompt_from_file "$task_file")
         scoring_notes=$(extract_scoring_notes "$task_file")
         rubric_app=$(extract_rubric_applicability "$task_file")
+        declared_rubrics=$(extract_rubrics_from_file "$task_file")
     fi
 
     if [[ -n "$label" ]]; then
@@ -520,6 +527,13 @@ emit_task_block() {
 
     if [[ -z "$label" ]]; then
         [[ -n "$prompt" ]] && { echo "**Prompt:** ${prompt}"; echo ""; }
+        if [[ -n "$declared_rubrics" ]]; then
+            local display_rubrics=$(echo "$declared_rubrics" | tr ',' '\n' | while read slug; do
+                echo "${SLUG_MAP[$slug]:-$slug}"
+            done | paste -s -d',' - | sed 's/,/, /g')
+            echo "**Required Rubrics (must score, do NOT mark N/A):** ${display_rubrics}"
+            echo ""
+        fi
         [[ -n "$rubric_app" ]] && { echo "**Rubric Applicability:**"; echo "$rubric_app"; echo ""; }
         [[ -n "$scoring_notes" ]] && { echo "**Scoring Notes:**"; echo "$scoring_notes"; echo ""; }
     fi
@@ -839,11 +853,6 @@ SCORER_EXIT_CODE=0
 
 # Build per-task rubric applicability map from task file metadata
 typeset -A TASK_RUBRICS
-SLUG_TO_DISPLAY=(correctness Correctness robustness Robustness readability Readability architecture Architecture domain_correctness "Domain Correctness" test_quality "Test Quality")
-typeset -A SLUG_MAP
-for i in $(seq 1 2 ${#SLUG_TO_DISPLAY[@]}); do
-    SLUG_MAP[${SLUG_TO_DISPLAY[$i]}]="${SLUG_TO_DISPLAY[$((i+1))]}"
-done
 
 for task_id in "${TASK_IDS[@]}"; do
     task_file=$(resolve_task_file_for_id "$task_id")
