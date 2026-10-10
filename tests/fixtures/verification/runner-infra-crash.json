@@ -1,0 +1,7 @@
+{
+  "verification": "completed",
+  "outcome": "infrastructure_error",
+  "compile": {"exit_code": 0, "errors": 0, "pass": true},
+  "editmode_tests": {"exit_code": 1, "total": 0, "passed": 0, "failed": 0, "pass": false},
+  "playmode_tests": {"exit_code": 1, "total": 0, "passed": 0, "failed": 0, "pass": false}
+}

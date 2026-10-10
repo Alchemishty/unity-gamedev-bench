@@ -1,0 +1,40 @@
+# unity-gamedev-bench Docker orchestration
+#
+# Usage:
+#   docker compose build sandbox
+#   UNITY_VERSION=2022.3.33f1 docker compose build unity
+#
+#   WORKSPACE_PATH=/tmp/project RESULTS_PATH=/tmp/results \
+#     BENCH_AGENT_CMD="claude -p" BENCH_PROMPT="Fix the bug" \
+#     docker compose run --rm sandbox
+#
+#   # Closed-book:
+#   docker compose run --rm --network none sandbox
+
+services:
+  sandbox:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.sandbox
+    image: ugb-sandbox
+    volumes:
+      - ${WORKSPACE_PATH:?Set WORKSPACE_PATH}:/workspace
+      - ${RESULTS_PATH:?Set RESULTS_PATH}:/results
+    environment:
+      - BENCH_AGENT_CMD
+      - BENCH_PROMPT
+
+  unity:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.unity
+      args:
+        UNITY_VERSION: ${UNITY_VERSION:-2022.3.33f1}
+    image: ugb-unity
+    volumes:
+      - ${WORKSPACE_PATH:?Set WORKSPACE_PATH}:/workspace
+      - ${RESULTS_PATH:?Set RESULTS_PATH}:/results
+      - ${UNITY_LICENSE_PATH:-/dev/null}:/root/.local/share/unity3d/Unity/Unity_lic.ulf:ro
+    environment:
+      - BENCH_AGENT_CMD
+      - BENCH_PROMPT

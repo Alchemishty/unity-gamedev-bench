@@ -1,0 +1,29 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vs/
+.vscode/
+.idea/
+*.csproj
+*.sln
+
+# Unity generated (inside project/)
+project/Library/
+project/Temp/
+project/obj/
+project/Build/
+project/Builds/
+project/Logs/
+project/UserSettings/
+
+# Benchmark scratch
+scratch/
+
+# Benchmark results (contain solution diffs — must not be tracked)
+results/
+
+# Repo clone cache
+.cache/
+docs/
