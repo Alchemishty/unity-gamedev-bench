@@ -20,7 +20,7 @@ teardown() {
         --agent "test-agent" --label stale-test s01
     echo "$output"
     [ "$status" -ne 0 ]
-    [[ "$output" == *"already contains task artifacts"* ]]
+    [[ "$output" == *"already contains benchmark artifacts"* ]]
 }
 
 @test "run-all rejects label with existing .failed files" {
@@ -31,5 +31,5 @@ teardown() {
         --agent "test-agent" --label stale-test s01
     echo "$output"
     [ "$status" -ne 0 ]
-    [[ "$output" == *"already contains task artifacts"* ]]
+    [[ "$output" == *"already contains benchmark artifacts"* ]]
 }

@@ -17,7 +17,7 @@ teardown() {
     # scores: 8+7+8+7+8+6 = 44, count=6, mean=7.333, task_score=73
     create_fake_json_scorer "$S01_VALID_JSON"
 
-    run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto
+    run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto --model test
     echo "$output"
     [ "$status" -eq 0 ]
     [[ "$output" == *"73"* ]]
@@ -28,7 +28,7 @@ teardown() {
     create_result_diff "$RESULTS_DIR" "s01"
     create_fake_json_scorer "$S01_VALID_JSON" 55
 
-    run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto
+    run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto --model test
     echo "$output"
     [ "$status" -ne 0 ]
     [[ "$output" == *"Scorer exited"* ]]
@@ -40,7 +40,7 @@ teardown() {
     local json='{"task":"s01","scores":{"correctness":8,"robustness":7,"readability":8,"architecture":7,"domain_correctness":8},"violations":[]}'
     create_fake_json_scorer "$json"
 
-    run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto
+    run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto --model test
     echo "$output"
     [ "$status" -ne 0 ]
     [[ "$output" == *"missing required rubric"* ]]
@@ -51,7 +51,7 @@ teardown() {
     local json='{"task":"s01","scores":{"correctness":8,"robustness":7,"readability":8,"architecture":7,"domain_correctness":8,"test_quality":6,"bonus":9},"violations":[]}'
     create_fake_json_scorer "$json"
 
-    run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto
+    run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto --model test
     echo "$output"
     [ "$status" -ne 0 ]
     [[ "$output" == *"unexpected rubric"* ]]
@@ -62,7 +62,7 @@ teardown() {
     local json='{"task":"s01","scores":{"correctness":11,"robustness":7,"readability":8,"architecture":7,"domain_correctness":8,"test_quality":6},"violations":[]}'
     create_fake_json_scorer "$json"
 
-    run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto
+    run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto --model test
     echo "$output"
     [ "$status" -ne 0 ]
     [[ "$output" == *"invalid score"* ]]
@@ -74,7 +74,7 @@ teardown() {
     # Scorer output doesn't mention s01 — auto-zero kicks in
     create_fake_json_scorer ""
 
-    run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto
+    run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto --model test
     echo "$output"
     [ "$status" -eq 0 ]
     [[ "$output" == *"0"* ]]
@@ -86,7 +86,7 @@ teardown() {
     create_result_failed "$RESULTS_DIR" "s01" "SETUP_FAILURE:127"
     create_fake_json_scorer "$S01_VALID_JSON"
 
-    run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto
+    run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto --model test
     echo "$output"
     [ "$status" -ne 0 ]
     [[ "$output" == *"Infrastructure failure"* ]]
@@ -96,7 +96,7 @@ teardown() {
     create_result_diff "$RESULTS_DIR" "s01"
     create_fake_json_scorer "$S01_VALID_JSON"
 
-    run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto
+    run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto --model test
     echo "$output"
     [ "$status" -eq 0 ]
     [ -f "${RESULTS_DIR}/manifest.json" ]
@@ -109,7 +109,7 @@ teardown() {
     create_result_diff "$RESULTS_DIR" "s01"
     create_fake_json_scorer "$S01_VALID_JSON"
 
-    run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto
+    run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto --model test
     [ "$status" -eq 0 ]
     [ -f "${RESULTS_DIR}/manifest.json" ]
     local score

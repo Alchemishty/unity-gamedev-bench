@@ -24,7 +24,7 @@ echo '${S01_VALID_JSON}'
 CLAUDE
     chmod +x "${FAKE_BIN}/claude"
 
-    run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto
+    run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto --model test
     echo "$output"
     [ "$status" -eq 0 ]
 
@@ -48,7 +48,7 @@ echo '${S01_VALID_JSON}'
 CLAUDE
     chmod +x "${FAKE_BIN}/claude"
 
-    run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto
+    run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto --model test
     [ "$status" -eq 0 ]
     [ -f "$stdin_file" ]
     local stdin_lines
@@ -60,7 +60,7 @@ CLAUDE
     create_result_diff "$RESULTS_DIR" "s01"
     create_fake_json_scorer "$S01_VALID_JSON"
 
-    run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto
+    run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto --model test
     [ "$status" -eq 0 ]
     [ -f "${RESULTS_DIR}/scoring-output-1.json" ]
     # Output should contain valid JSON line

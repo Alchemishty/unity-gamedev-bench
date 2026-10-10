@@ -10,12 +10,12 @@ Benchmark for evaluating AI coding agents on Unity game development tasks. 10 fi
     --label my-first-run --suite standard
 
 # Score it
-./scripts/score.sh results/my-first-run --auto
+./scripts/score.sh results/my-first-run --auto --model claude-sonnet-5-5
 
 # Run again and get an automatic comparison
 ./scripts/run-all.sh --agent "claude -p --dangerously-skip-permissions" \
     --label my-second-run --suite standard
-./scripts/score.sh results/my-second-run --auto
+./scripts/score.sh results/my-second-run --auto --model claude-sonnet-5-5
 ```
 
 ## What It Measures

@@ -95,6 +95,32 @@ if [[ "$CUR_GEN" != "$PREV_GEN" ]]; then
     fi
 fi
 
+# Check evaluation conditions compatibility
+CONDITION_WARNINGS=()
+for field in prompt_mode network docker; do
+    cur_val=$(jq -r ".environment.${field} // empty" "${CURRENT}/manifest.json" 2>/dev/null)
+    prev_val=$(jq -r ".environment.${field} // empty" "${PREVIOUS}/manifest.json" 2>/dev/null)
+    if [[ -n "$cur_val" && -n "$prev_val" && "$cur_val" != "$prev_val" ]]; then
+        CONDITION_WARNINGS+=("${field}: ${prev_val} → ${cur_val}")
+        COMPARABLE=false
+    fi
+done
+# Check task sets match
+CUR_TASKS=$(jq -r '.task_scores | keys | sort | join(",")' "${CURRENT}/manifest.json" 2>/dev/null)
+PREV_TASKS=$(jq -r '.task_scores | keys | sort | join(",")' "${PREVIOUS}/manifest.json" 2>/dev/null)
+if [[ "$CUR_TASKS" != "$PREV_TASKS" ]]; then
+    CONDITION_WARNINGS+=("task sets differ")
+    COMPARABLE=false
+fi
+
+if [[ ${#CONDITION_WARNINGS[@]} -gt 0 && ! $FORCE ]]; then
+    echo "Error: Evaluation conditions differ — results are not comparable."
+    for w in "${CONDITION_WARNINGS[@]}"; do echo "  $w"; done
+    echo ""
+    echo "Use --force for a non-comparable side-by-side view."
+    exit 1
+fi
+
 # ---- Extract scores ----
 CUR_SCORE=$(jq -r '.benchmark_score_precise // .benchmark_score' "${CURRENT}/manifest.json")
 PREV_SCORE=$(jq -r '.benchmark_score_precise // .benchmark_score' "${PREVIOUS}/manifest.json")
@@ -140,9 +166,9 @@ printf "  %-24s %8s → %-8s\n" "Compile pass" "${prev_compile}/${prev_total}" "
 printf "  %-24s %8s → %-8s\n" "Verified" "${prev_verified}/${prev_total}" "${cur_verified}/${cur_total}"
 
 # Timing
-cur_time=$(jq -r '.timing.total_seconds // "?"' "${CURRENT}/manifest.json")
-prev_time=$(jq -r '.timing.total_seconds // "?"' "${PREVIOUS}/manifest.json")
-printf "  %-24s %7ss → %-7ss\n" "Total time" "$prev_time" "$cur_time"
+cur_wall=$(jq -r '.timing.wall_seconds // "?"' "${CURRENT}/manifest.json")
+prev_wall=$(jq -r '.timing.wall_seconds // "?"' "${PREVIOUS}/manifest.json")
+printf "  %-24s %7ss → %-7ss\n" "Wall time" "$prev_wall" "$cur_wall"
 
 # Tokens
 cur_tok_in=$(jq -r '.cost.total_tokens_in // "?"' "${CURRENT}/manifest.json")

@@ -1,7 +1,7 @@
 {
   "name": "standard",
   "version": "v1",
-  "description": "10-task verified core suite",
+  "description": "10-task standard suite",
   "tasks": ["s01", "s03", "s05", "s07", "m01", "m02", "m04", "m08", "m11", "m13"],
   "task_count": 10
 }

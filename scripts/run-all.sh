@@ -94,10 +94,22 @@ echo "============================================================"
 # ---- Check for stale results ----
 RESULTS_DIR="${BENCH_ROOT}/results/${LABEL}"
 if [[ -d "$RESULTS_DIR" ]]; then
-    STALE_DIFFS=(${RESULTS_DIR}/*.diff(N))
-    STALE_FAILED=(${RESULTS_DIR}/*.failed(N))
-    if [[ ${#STALE_DIFFS[@]} -gt 0 || ${#STALE_FAILED[@]} -gt 0 ]]; then
-        echo "Error: Results directory '${LABEL}' already contains task artifacts."
+    STALE_ARTIFACTS=(
+        ${RESULTS_DIR}/*.diff(N)
+        ${RESULTS_DIR}/*.failed(N)
+        ${RESULTS_DIR}/*.meta.json(N)
+        ${RESULTS_DIR}/*.verification.json(N)
+        ${RESULTS_DIR}/*.baseline-verification.json(N)
+        ${RESULTS_DIR}/*.log(N)
+        ${RESULTS_DIR}/manifest.json(N)
+        ${RESULTS_DIR}/scoring-output-*.json(N)
+        ${RESULTS_DIR}/scoring-input.md(N)
+        ${RESULTS_DIR}/scoring-report.md(N)
+        ${RESULTS_DIR}/run-request.json(N)
+    )
+    if [[ ${#STALE_ARTIFACTS[@]} -gt 0 ]]; then
+        echo "Error: Results directory '${LABEL}' already contains benchmark artifacts."
+        echo "  Use a new label, or remove the existing directory:"
         echo "  rm -rf ${RESULTS_DIR}"
         exit 1
     fi
@@ -136,8 +148,10 @@ RUN_START=$(date +%s)
 echo ""
 echo "Preparing snapshots..."
 
-CACHE_DIR="${BENCH_ROOT}/.cache/repos"
 SNAPSHOT_BASE=$(mktemp -d)
+trap 'rm -rf "$SNAPSHOT_BASE"' EXIT INT TERM
+
+CACHE_DIR="${BENCH_ROOT}/.cache/repos"
 typeset -A TASK_SNAPSHOT  # maps task_id → snapshot dir
 typeset -A REPO_SHA_DONE  # dedup key = "repo|sha"
 
@@ -273,14 +287,32 @@ while [[ $RUNNING -gt 0 ]]; do
     collect_finished
 done
 
-# Cleanup snapshots
-rm -rf "$SNAPSHOT_BASE"
+# Snapshots cleaned up by EXIT trap
 
-TOTAL_TIME=$(( $(date +%s) - RUN_START ))
+WALL_SECONDS=$(( $(date +%s) - RUN_START ))
+
+# Compute summed task seconds from meta files
+SUMMED_TASK_SECONDS=0
+for tid in "${TASKS[@]}"; do
+    mf="${RESULTS_DIR}/${tid}.meta.json"
+    if [[ -f "$mf" ]] && command -v jq &>/dev/null; then
+        dur=$(jq -r '.duration_seconds // 0' "$mf" 2>/dev/null)
+        ((SUMMED_TASK_SECONDS += dur))
+    fi
+done
+
+# Append timing to run-request.json
+if [[ -f "$RUN_REQUEST_FILE" ]] && command -v jq &>/dev/null; then
+    TMP_RR=$(mktemp)
+    jq --argjson wall "$WALL_SECONDS" --argjson summed "$SUMMED_TASK_SECONDS" \
+        '. + {wall_seconds: $wall, summed_task_seconds: $summed}' \
+        "$RUN_REQUEST_FILE" > "$TMP_RR" && mv "$TMP_RR" "$RUN_REQUEST_FILE"
+fi
 
 echo ""
 echo "============================================================"
 echo "  COMPLETE — $(date)"
+echo "  Wall time: ${WALL_SECONDS}s (summed task time: ${SUMMED_TASK_SECONDS}s)"
 echo "  Succeeded: ${SUCCEEDED}/${TOTAL}"
 [[ $FAILED -gt 0 ]] && echo "  Agent failures: ${FAILED}"
 [[ $INFRA_ERRORS -gt 0 ]] && echo "  Infrastructure errors: ${INFRA_ERRORS}"

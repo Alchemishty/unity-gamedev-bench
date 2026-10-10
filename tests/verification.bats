@@ -19,7 +19,7 @@ HIGH_CORRECTNESS_JSON='{"task":"s01","scores":{"correctness":8,"robustness":7,"r
     cp "${FIXTURES_DIR}/verification/compile-fail.json" "${RESULTS_DIR}/s01.verification.json"
     create_fake_json_scorer "$HIGH_CORRECTNESS_JSON"
 
-    run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto
+    run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto --model test
     echo "$output"
     [ "$status" -eq 0 ]
     [[ "$output" == *"CAP"* ]]
@@ -33,7 +33,7 @@ HIGH_CORRECTNESS_JSON='{"task":"s01","scores":{"correctness":8,"robustness":7,"r
     cp "${FIXTURES_DIR}/verification/test-regression.json" "${RESULTS_DIR}/s01.verification.json"
     create_fake_json_scorer "$HIGH_CORRECTNESS_JSON"
 
-    run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto
+    run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto --model test
     echo "$output"
     [ "$status" -eq 0 ]
     [[ "$output" == *"CAP"* ]]
@@ -47,7 +47,7 @@ HIGH_CORRECTNESS_JSON='{"task":"s01","scores":{"correctness":8,"robustness":7,"r
     cp "${FIXTURES_DIR}/verification/runner-crash.json" "${RESULTS_DIR}/s01.verification.json"
     create_fake_json_scorer "$HIGH_CORRECTNESS_JSON"
 
-    run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto
+    run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto --model test
     echo "$output"
     [ "$status" -eq 0 ]
     [[ "$output" == *"CAP"* ]]
@@ -59,7 +59,7 @@ HIGH_CORRECTNESS_JSON='{"task":"s01","scores":{"correctness":8,"robustness":7,"r
     create_result_diff "$RESULTS_DIR" "s01"
     create_fake_json_scorer "$HIGH_CORRECTNESS_JSON"
 
-    run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto
+    run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto --model test
     echo "$output"
     [ "$status" -eq 0 ]
     [[ "$output" != *"CAP"* ]]

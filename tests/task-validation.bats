@@ -15,7 +15,7 @@ teardown() {
 @test "empty results directory exits nonzero" {
     create_fake_json_scorer "$S01_VALID_JSON"
 
-    run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto
+    run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto --model test
     echo "$output"
     [ "$status" -ne 0 ]
     [[ "$output" == *"No task results found"* ]]
@@ -25,7 +25,7 @@ teardown() {
     echo "diff --git a/test b/test" > "${RESULTS_DIR}/z99.diff"
     create_fake_json_scorer ""
 
-    run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto
+    run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto --model test
     echo "$output"
     [ "$status" -ne 0 ]
     [[ "$output" == *"does not match a benchmark task"* ]]
@@ -36,7 +36,7 @@ teardown() {
     echo "diff --git a/test b/test" > "${RESULTS_DIR}/z99.diff"
     create_fake_json_scorer "$S01_VALID_JSON"
 
-    run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto
+    run zsh "${TEST_BENCH_ROOT}/scripts/score.sh" "$RESULTS_DIR" --auto --model test
     echo "$output"
     [ "$status" -ne 0 ]
     [[ "$output" == *"z99"* ]]
