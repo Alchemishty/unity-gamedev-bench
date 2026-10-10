@@ -130,6 +130,8 @@ extract_meta_from_file() {
     sed -n '/^<!--/,/^-->/p' "$1" 2>/dev/null | grep -m1 "^${2}:" 2>/dev/null | sed "s/^${2}: *//" || echo ""
 }
 
+RUN_START=$(date +%s)
+
 # ---- Serial snapshot preparation ----
 echo ""
 echo "Preparing snapshots..."
@@ -274,9 +276,7 @@ done
 # Cleanup snapshots
 rm -rf "$SNAPSHOT_BASE"
 
-WALL_END=$(date +%s)
-WALL_START=$(date -j -f "%a %b %d %T %Z %Y" "$(head -1 "$RUN_REQUEST_FILE" 2>/dev/null | jq -r '.timestamp' 2>/dev/null | sed 's/T/ /;s/Z//' | xargs -I{} date -j -f "%Y-%m-%d %H:%M:%S" "{}" "+%a %b %d %T %Z %Y" 2>/dev/null)" "+%s" 2>/dev/null || echo "$TASK_START")
-TOTAL_TIME=$(( $(date +%s) - TASK_START ))
+TOTAL_TIME=$(( $(date +%s) - RUN_START ))
 
 echo ""
 echo "============================================================"
