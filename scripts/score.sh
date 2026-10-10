@@ -590,6 +590,7 @@ if command -v jq &>/dev/null; then
     jq -n \
         --arg gen "$SCORE_GENERATION" \
         --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+        --arg commit "$(cd "$BENCH_ROOT" && git rev-parse --short HEAD 2>/dev/null || echo 'unknown')" \
         --argjson score "$BENCHMARK_SCORE" \
         --arg precise "$BENCHMARK_PRECISE" \
         --argjson tasks "$TASK_SCORES_JSON" \
@@ -606,6 +607,7 @@ if command -v jq &>/dev/null; then
         --argjson env "$ENV_JSON" \
         '{
             score_generation: $gen,
+            benchmark_commit: $commit,
             timestamp: $ts,
             benchmark_score: $score,
             benchmark_score_precise: ($precise | tonumber),

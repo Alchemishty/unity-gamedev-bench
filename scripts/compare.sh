@@ -98,8 +98,8 @@ fi
 # Check evaluation conditions compatibility
 CONDITION_WARNINGS=()
 for field in prompt_mode network docker; do
-    cur_val=$(jq -r ".environment.${field} // empty" "${CURRENT}/manifest.json" 2>/dev/null)
-    prev_val=$(jq -r ".environment.${field} // empty" "${PREVIOUS}/manifest.json" 2>/dev/null)
+    cur_val=$(jq -r "if .environment.${field} != null then (.environment.${field} | tostring) else \"\" end" "${CURRENT}/manifest.json" 2>/dev/null)
+    prev_val=$(jq -r "if .environment.${field} != null then (.environment.${field} | tostring) else \"\" end" "${PREVIOUS}/manifest.json" 2>/dev/null)
     if [[ -n "$cur_val" && -n "$prev_val" && "$cur_val" != "$prev_val" ]]; then
         CONDITION_WARNINGS+=("${field}: ${prev_val} → ${cur_val}")
         COMPARABLE=false
@@ -113,7 +113,7 @@ if [[ "$CUR_TASKS" != "$PREV_TASKS" ]]; then
     COMPARABLE=false
 fi
 
-if [[ ${#CONDITION_WARNINGS[@]} -gt 0 && ! $FORCE ]]; then
+if [[ ${#CONDITION_WARNINGS[@]} -gt 0 ]] && ! $FORCE; then
     echo "Error: Evaluation conditions differ — results are not comparable."
     for w in "${CONDITION_WARNINGS[@]}"; do echo "  $w"; done
     echo ""
